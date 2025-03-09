@@ -1,1 +1,1 @@
-{"root":["./src/index.ts","./src/types.d.ts","./src/interfaces/ireposdata.ts","./src/interfaces/iuserdata.ts"],"version":"5.7.3"}
+{"root":["./src/index.ts","./src/interfaces/ireposdata.ts","./src/interfaces/iuserdata.ts"],"version":"5.7.3"}
