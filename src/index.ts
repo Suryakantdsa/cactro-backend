@@ -7,11 +7,13 @@ import { IRepoData } from "./Interfaces/IReposData";
 config();
 
 const app = express();
+
 app.use(express.json());
 app.use(cors());
 
 const GITHUB_URL = "https://api.github.com";
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
+const GITHUB_USERNAME = process.env.GITHUB_USERNAME;
 const PORT = process.env.PORT || "8008";
 
 const axiosInstance = axios.create({
@@ -35,9 +37,7 @@ app.get("/github", async (req, res) => {
     );
     const userData = userRes.data as IUSerData;
 
-    const repoRes = await axiosInstance.get(
-      `users/${process.env.GITHUB_USERNAME}/repos`
-    );
+    const repoRes = await axiosInstance.get(`users/${GITHUB_USERNAME}/repos`);
     const repoData = repoRes.data as IRepoData[];
 
     res.status(201).json({
@@ -56,6 +56,55 @@ app.get("/github", async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({ error: error });
+  }
+});
+
+app.get("/github/:repo_name", async (req, res) => {
+  const { repo_name } = req.params;
+  try {
+    const repoDetailsRes = await axiosInstance(
+      `/repos/${GITHUB_USERNAME}/${repo_name}`
+    );
+
+    const repoDetails = repoDetailsRes.data;
+    res.json({
+      name: repoDetails.name,
+      description: repoDetails.description,
+      stars: repoDetails.stargazers_count,
+      forks: repoDetails.forks_count,
+      open_issues: repoDetails.open_issues_count,
+      language: repoDetails.language,
+      repo_url: repoDetails.html_url,
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      error: error.response?.data || "Error fetching repository details",
+    });
+  }
+});
+
+app.post("/github/:repo_name/issues", async (req, res) => {
+  const { repo_name } = req.params;
+  const { title, body } = req.body;
+
+  if (!title || !body) {
+    res.status(400).json({ error: "Title and body are required." });
+    return;
+  }
+
+  try {
+    const issueRes = await axiosInstance.post(
+      `/repos/${GITHUB_USERNAME}/${repo_name}/issues`,
+      {
+        title,
+        body,
+      }
+    );
+    res.json({ issue_url: issueRes.data.html_url });
+  } catch (error: any) {
+    res
+      .status(500)
+      .json({ error: error.response?.data || "Error creating issue" });
   }
 });
 
